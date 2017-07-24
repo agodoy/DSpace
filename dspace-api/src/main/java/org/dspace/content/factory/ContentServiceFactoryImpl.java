@@ -8,6 +8,7 @@
 package org.dspace.content.factory;
 
 import org.dspace.content.DSpaceObject;
+import org.dspace.content.HolderService;
 import org.dspace.content.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -52,6 +53,8 @@ public class ContentServiceFactoryImpl extends ContentServiceFactory {
     private SupervisedItemService supervisedItemService;
     @Autowired(required = true)
     private SiteService siteService;
+    @Autowired(required = true)
+    private HolderService holderService;
 
 
     @Override
@@ -138,4 +141,9 @@ public class ContentServiceFactoryImpl extends ContentServiceFactory {
     public SiteService getSiteService() {
         return siteService;
     }
+
+	@Override
+	public HolderService getHolderService() {
+		return holderService;
+	}
 }
