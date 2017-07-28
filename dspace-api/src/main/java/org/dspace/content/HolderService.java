@@ -7,7 +7,9 @@ import org.dspace.content.service.DSpaceObjectLegacySupportService;
 import org.dspace.content.service.DSpaceObjectService;
 import org.dspace.core.Context;
 
-public interface HolderService extends DSpaceObjectService<Holder>, DSpaceObjectLegacySupportService<Holder>{
+public interface HolderService extends DSpaceObjectService<Holder>, DSpaceObjectLegacySupportService<Community>
+{
+
 
 	List<Holder> findAll(Context context) throws SQLException;
 
