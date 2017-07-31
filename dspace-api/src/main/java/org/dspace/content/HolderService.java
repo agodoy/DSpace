@@ -10,7 +10,8 @@ import org.dspace.core.Context;
 public interface HolderService extends DSpaceObjectService<Holder>, DSpaceObjectLegacySupportService<Community>
 {
 
-
 	List<Holder> findAll(Context context) throws SQLException;
+
+	void ping();
 
 }

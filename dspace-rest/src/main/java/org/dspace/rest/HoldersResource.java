@@ -7,17 +7,22 @@
  */
 package org.dspace.rest;
 
+import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.log4j.Logger;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.dspace.authorize.factory.AuthorizeServiceFactory;
 import org.dspace.authorize.service.AuthorizeService;
 import org.dspace.content.HolderService;
@@ -33,67 +38,71 @@ import org.dspace.rest.exceptions.ContextException;
  * @author agodoy
  */
 @Path("/padron")
-public class HoldersResource extends Resource
-{
-    protected HolderService holdersService = ContentServiceFactory.getInstance().getHolderService();
-    protected ItemService itemService = ContentServiceFactory.getInstance().getItemService();
-    protected AuthorizeService authorizeService = AuthorizeServiceFactory.getInstance().getAuthorizeService();
-    protected WorkspaceItemService workspaceItemService = ContentServiceFactory.getInstance().getWorkspaceItemService();
-    
-    private static Logger log = Logger.getLogger(HoldersResource.class);
+public class HoldersResource extends Resource {
+	protected HolderService holdersService = ContentServiceFactory.getInstance().getHolderService();
+	protected ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+	protected AuthorizeService authorizeService = AuthorizeServiceFactory.getInstance().getAuthorizeService();
+	protected WorkspaceItemService workspaceItemService = ContentServiceFactory.getInstance().getWorkspaceItemService();
 
+	private static Logger log = Logger.getLogger(HoldersResource.class);
 
-    /**
-     * Return array of all holders in DSpace. You can add more properties
-     * through expand parameter.
-     * 
-     * @return Return array of collection, on which has logged user permission
-     *         to view.
-     * @throws WebApplicationException
-     *             It is thrown when was problem with database reading
-     *             (SQLException) or problem with creating
-     *             context(ContextException).
-     */
-    @GET
-    @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
-    public List<Holder> getHolders() throws WebApplicationException{
-        org.dspace.core.Context context = null;
-        List<org.dspace.content.Holder> holders = null;
-        List<Holder> holdersResult = new ArrayList<Holder>();
+	/**
+	 * Return array of all holders in DSpace. You can add more properties
+	 * through expand parameter.
+	 * 
+	 * @return Return array of holders, on which has logged user permission
+	 *         to view.
+	 * @throws WebApplicationException
+	 *             It is thrown when was problem with database reading
+	 *             (SQLException) or problem with creating
+	 *             context(ContextException).
+	 */
+	@GET
+	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
+	public List<Holder> getHolders(@QueryParam("user") String user, @QueryParam("password") String password)
+			throws WebApplicationException {
+		org.dspace.core.Context context = null;
+		List<org.dspace.content.Holder> holders = null;
+		List<Holder> holdersResult = new ArrayList<Holder>();
 
-        try
-        {
-            context = createContext();
+		try {
 
-            holders = holdersService.findAll(context);
-            
-            for (org.dspace.content.Holder holder : holders) {
-				Holder h = new Holder();
-				h.setCorreo(holder.getCorreo());
-				h.setNombre(holder.getNombre());
-				h.setNumTel(holder.getNumTel());
-				h.setpApellido(holder.getpApellido());
-				h.setsApellido(holder.getsApellido());
-				holdersResult.add(h);
+			if (authorizeService.holderAuthorization(user, password)) {
+				context = createContext();
+
+				holders = holdersService.findAll(context);
+
+				for (org.dspace.content.Holder holder : holders) {
+					Holder h = new Holder();
+					h.setCorreo(holder.getCorreo());
+					h.setNombre(holder.getNombre());
+					h.setNumTel(holder.getNumTel());
+					h.setpApellido(holder.getpApellido());
+					h.setsApellido(holder.getsApellido());
+					holdersResult.add(h);
+				}
+
+				context.complete();
+
 			}
-            
-            context.complete();
-        }
-        catch (SQLException e)
-        {
-            processException("Something went wrong while reading holders from database. Message: " + e, context);
-        }
-        catch (ContextException e)
-        {
-            processException("Something went wrong while reading holders, ContextError. Message: " + e.getMessage(), context);
-        }
-        finally
-        {
-            processFinally(context);
-        }
+			
+		} catch (SQLException e) {
+			processException("Something went wrong while reading holders from database. Message: " + e, context);
+		} catch (ContextException e) {
+			processException("Something went wrong while reading holders, ContextError. Message: " + e.getMessage(),
+					context);
+		} finally {
+			processFinally(context);
+		}
 
-        log.info("All holders were successfully read.");
-        return holdersResult;
-    }
+		log.info("All holders were successfully read.");
+		return holdersResult;
+	}
+
+	@GET
+	@Path("/ping")
+	public void pingSolr() throws WebApplicationException {
+		holdersService.ping();
+	}
 
 }
