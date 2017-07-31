@@ -1,6 +1,5 @@
 package org.dspace.content;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -38,34 +37,39 @@ public class HolderServiceImpl extends DSpaceObjectServiceImpl<Holder> implement
 	@Override
 	public List<Holder> findAll(Context context) throws SQLException {
 
+		List<String> emails = new ArrayList<String>();
 		List<Holder> holders = new ArrayList<Holder>();
-
 		List<Item> items = itemDao.findAll(context);
 
 		for (Item item : items) {
 
-			Holder holder = new Holder();
+			if (item.getSubmitter() != null && !emails.contains(item.getSubmitter().getEmail())) {
 
-			if (item.getSubmitter() != null)
-				holder.setCorreo(item.getSubmitter().getEmail());
+				Holder holder = new Holder();
 
-			if (item.getMetadata() != null) {
-				for (MetadataValue meta : item.getMetadata()) {
-					if (meta.getMetadataField().getID() == 1)
-						holder.setNombre(meta.getValue());
-					if (meta.getMetadataField().getID() == 2) {
-						String[] apellidos = StringUtils.split(meta.getValue(), "");
-						if (apellidos.length > 0)
-							holder.setpApellido(apellidos[0]);
-						if (apellidos.length > 1)
-							holder.setsApellido(apellidos[1]);
+				if (item.getSubmitter() != null)
+					holder.setCorreo(item.getSubmitter().getEmail());
+
+				if (item.getMetadata() != null) {
+					for (MetadataValue meta : item.getMetadata()) {
+						if (meta.getMetadataField().getID() == 1)
+							holder.setNombre(meta.getValue());
+						if (meta.getMetadataField().getID() == 2) {
+							String[] apellidos = StringUtils.split(meta.getValue(), "");
+							if (apellidos.length > 0)
+								holder.setpApellido(apellidos[0]);
+							if (apellidos.length > 1)
+								holder.setsApellido(apellidos[1]);
+						}
+						if (meta.getMetadataField().getID() == 3)
+							holder.setNumTel(meta.getValue());
 					}
-					if (meta.getMetadataField().getID() == 3)
-						holder.setNumTel(meta.getValue());
 				}
-			}
 
-			holders.add(holder);
+				holders.add(holder);
+				emails.add(item.getSubmitter().getEmail());
+
+			}
 		}
 
 		return holders;
@@ -107,7 +111,7 @@ public class HolderServiceImpl extends DSpaceObjectServiceImpl<Holder> implement
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	@Override
 	public void ping() {
 		log.info("solr-statistics.spidersfile:" + configurationService.getProperty("solr-statistics.spidersfile"));
