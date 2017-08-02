@@ -6,58 +6,56 @@
  * http://www.dspace.org/license/
  */
 package org.dspace.rest;
-
-import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.log4j.Logger;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
-import org.apache.solr.client.solrj.response.SolrPingResponse;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.dspace.authorize.factory.AuthorizeServiceFactory;
 import org.dspace.authorize.service.AuthorizeService;
-import org.dspace.content.HolderService;
+import org.dspace.content.StatisticsService;
 import org.dspace.content.factory.ContentServiceFactory;
 import org.dspace.content.service.ItemService;
 import org.dspace.content.service.WorkspaceItemService;
 import org.dspace.rest.common.Holder;
 import org.dspace.rest.exceptions.ContextException;
+import org.dspace.statistics.ObjectCount;
 
 /**
  * This class provides all CRUD operation over holders.
  * 
  * @author agodoy
  */
-@Path("/padron")
-public class HoldersResource extends Resource {
-	protected HolderService holdersService = ContentServiceFactory.getInstance().getHolderService();
+@Path("/estadisticas")
+public class StatisticsResource extends Resource {
+	protected StatisticsService statisticsService = ContentServiceFactory.getInstance().getStatisticsService();
 	protected ItemService itemService = ContentServiceFactory.getInstance().getItemService();
 	protected AuthorizeService authorizeService = AuthorizeServiceFactory.getInstance().getAuthorizeService();
 	protected WorkspaceItemService workspaceItemService = ContentServiceFactory.getInstance().getWorkspaceItemService();
-
-	private static Logger log = Logger.getLogger(HoldersResource.class);
+	
+	private static Logger log = Logger.getLogger(StatisticsResource.class);
 
 	/**
 	 * Return array of all holders in DSpace. You can add more properties
 	 * through expand parameter.
 	 * 
-	 * @return Return array of holders, on which has logged user permission
-	 *         to view.
+	 * @return Return array of holders, on which has logged user permission to
+	 *         view.
 	 * @throws WebApplicationException
 	 *             It is thrown when was problem with database reading
 	 *             (SQLException) or problem with creating
 	 *             context(ContextException).
 	 */
 	@GET
+	@Path("/padron")
 	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 	public List<Holder> getHolders(@QueryParam("user") String user, @QueryParam("password") String password)
 			throws WebApplicationException {
@@ -70,7 +68,7 @@ public class HoldersResource extends Resource {
 			if (authorizeService.holderAuthorization(user, password)) {
 				context = createContext();
 
-				holders = holdersService.findAll(context);
+				holders = statisticsService.findAll(context);
 
 				for (org.dspace.content.Holder holder : holders) {
 					Holder h = new Holder();
@@ -85,7 +83,7 @@ public class HoldersResource extends Resource {
 				context.complete();
 
 			}
-			
+
 		} catch (SQLException e) {
 			processException("Something went wrong while reading holders from database. Message: " + e, context);
 		} catch (ContextException e) {
@@ -100,9 +98,67 @@ public class HoldersResource extends Resource {
 	}
 
 	@GET
-	@Path("/ping")
-	public void pingSolr() throws WebApplicationException {
-		holdersService.ping();
+	@Path("/ranking/articulos")
+	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
+	public ObjectCount[] viewItems() throws WebApplicationException {
+
+		ObjectCount[] result = null;
+		org.dspace.core.Context context = null;
+
+		try {
+
+			context = createContext();
+
+			result = statisticsService.viewItemsStatistics();
+			
+			context.complete();
+
+		} catch (SQLException e) {
+			processException("Something went wrong while reading items views statistics from database. Message: " + e,
+					context);
+		} catch (ContextException e) {
+			processException("Something went wrong while reading items views statistics, ContextError. Message: "
+					+ e.getMessage(), context);
+		} catch (SolrServerException e) {
+			processException("Something went wrong while reading items views statistics, ContextError. Message: "
+					+ e.getMessage(), context);
+		} finally {
+			processFinally(context);
+		}
+
+		return result;
 	}
 
+	@GET
+	@Path("/descargas")
+	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
+	public ObjectCount[] downloadItems() throws WebApplicationException {
+
+		ObjectCount[] result = null;
+		org.dspace.core.Context context = null;
+
+		try {
+
+			context = createContext();
+			
+			result = statisticsService.downloadItemsStatistics();
+
+			context.complete();
+
+		} catch (SQLException e) {
+			processException(
+					"Something went wrong while reading items downloads statistics from database. Message: " + e,
+					context);
+		} catch (ContextException e) {
+			processException("Something went wrong while reading items downloads statistics, ContextError. Message: "
+					+ e.getMessage(), context);
+		} catch (SolrServerException e) {
+			processException("Something went wrong while reading items downloads statistics, ContextError. Message: "
+					+ e.getMessage(), context);
+		} finally {
+			processFinally(context);
+		}
+
+		return result;
+	}
 }

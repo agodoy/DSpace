@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.dspace.authorize.AuthorizeException;
@@ -16,9 +17,11 @@ import org.dspace.content.dao.ItemDAO;
 import org.dspace.content.dao.MetadataValueDAO;
 import org.dspace.core.Context;
 import org.dspace.services.ConfigurationService;
+import org.dspace.statistics.ObjectCount;
+import org.dspace.statistics.service.SolrLoggerService;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class HolderServiceImpl extends DSpaceObjectServiceImpl<Holder> implements HolderService {
+public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> implements StatisticsService {
 
 	@Autowired(required = true)
 	protected HolderDAO holderDAO;
@@ -31,8 +34,11 @@ public class HolderServiceImpl extends DSpaceObjectServiceImpl<Holder> implement
 
 	@Autowired(required = true)
 	private ConfigurationService configurationService;
+	
+	@Autowired(required = true)
+	private SolrLoggerService solrLoggerService;
 
-	private static Logger log = Logger.getLogger(HolderServiceImpl.class);
+	private static Logger log = Logger.getLogger(StatisticsServiceImpl.class);
 
 	@Override
 	public List<Holder> findAll(Context context) throws SQLException {
@@ -52,16 +58,16 @@ public class HolderServiceImpl extends DSpaceObjectServiceImpl<Holder> implement
 
 				if (item.getMetadata() != null) {
 					for (MetadataValue meta : item.getMetadata()) {
-						if (meta.getMetadataField().getID() == 1)
+						if (meta.getMetadataField().getID() == 74)
 							holder.setNombre(meta.getValue());
-						if (meta.getMetadataField().getID() == 2) {
+						if (meta.getMetadataField().getID() == 75) {
 							String[] apellidos = StringUtils.split(meta.getValue(), "");
 							if (apellidos.length > 0)
 								holder.setpApellido(apellidos[0]);
 							if (apellidos.length > 1)
 								holder.setsApellido(apellidos[1]);
 						}
-						if (meta.getMetadataField().getID() == 3)
+						if (meta.getMetadataField().getID() == 76)
 							holder.setNumTel(meta.getValue());
 					}
 				}
@@ -112,7 +118,7 @@ public class HolderServiceImpl extends DSpaceObjectServiceImpl<Holder> implement
 		return null;
 	}
 
-	@Override
+	
 	public void ping() {
 		log.info("solr-statistics.spidersfile:" + configurationService.getProperty("solr-statistics.spidersfile"));
 		log.info("solr-statistics.server:" + configurationService.getProperty("solr-statistics.server"));
@@ -137,6 +143,16 @@ public class HolderServiceImpl extends DSpaceObjectServiceImpl<Holder> implement
 		} catch (Exception e) {
 			log.info("Ping of Solr Core [%s] Failed with [%s].  New Core Will be Created" + e.getClass().getName());
 		}
+	}
+
+	@Override
+	public ObjectCount[] viewItemsStatistics() throws SolrServerException {
+		return solrLoggerService.queryFacetField("type:2", "statistics_type:view", "uid", 500000, true, null);
+	}
+
+	@Override
+	public ObjectCount[] downloadItemsStatistics() throws SolrServerException {
+		return solrLoggerService.queryFacetField("type:0", "statistics_type:view", "uid", 500000, true, null);
 	}
 
 }

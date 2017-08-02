@@ -8,8 +8,9 @@
 package org.dspace.content.factory;
 
 import org.dspace.content.DSpaceObject;
-import org.dspace.content.HolderService;
+import org.dspace.content.StatisticsService;
 import org.dspace.content.service.*;
+import org.dspace.statistics.service.SolrLoggerService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
@@ -54,7 +55,9 @@ public class ContentServiceFactoryImpl extends ContentServiceFactory {
     @Autowired(required = true)
     private SiteService siteService;
     @Autowired(required = true)
-    private HolderService holderService;
+    private StatisticsService statisticsService;
+    @Autowired(required = true)
+    private SolrLoggerService solrLoggerService;
 
 
     @Override
@@ -143,7 +146,12 @@ public class ContentServiceFactoryImpl extends ContentServiceFactory {
     }
 
 	@Override
-	public HolderService getHolderService() {
-		return holderService;
+	public SolrLoggerService getSolrLoggerService() {
+		return solrLoggerService;
+	}
+
+	@Override
+	public StatisticsService getStatisticsService() {
+		return statisticsService;
 	}
 }
