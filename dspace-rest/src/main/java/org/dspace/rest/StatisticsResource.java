@@ -34,7 +34,7 @@ import org.dspace.statistics.ObjectCount;
  * 
  * @authora agodoy
  */
-//@Path("/estadisticas")
+@Path("/estadisticas")
 public class StatisticsResource extends Resource {
 	protected StatisticsService statisticsService = ContentServiceFactory.getInstance().getStatisticsService();
 	protected ItemService itemService = ContentServiceFactory.getInstance().getItemService();
