@@ -37,4 +37,6 @@ public interface HandleDAO extends GenericDAO<Handle> {
     int updateHandlesWithNewPrefix(Context context, String newPrefix, String oldPrefix) throws SQLException;
 
     int countRows(Context context) throws SQLException;
+
+    public List<Handle> findByItemId(Context context, String id) throws SQLException;
 }

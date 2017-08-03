@@ -146,4 +146,11 @@ public class HandleDAOImpl extends AbstractHibernateDAO<Handle> implements Handl
         // Run our work, returning the next value in the sequence (see 'nextValReturningWork' above)
         return getHibernateSession(context).doReturningWork(nextValReturningWork);
     }
+    
+    @Override
+    public List<Handle> findByItemId(Context context, String id) throws SQLException {
+    	Query query = createQuery(context, "FROM Handle WHERE resource_id = :id");
+        query.setParameter("id", id);
+        return list(query);
+    }
 }

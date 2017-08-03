@@ -14,7 +14,7 @@ public interface StatisticsService extends DSpaceObjectService<Holder>, DSpaceOb
 
 	List<Holder> findAll(Context context) throws SQLException;
 
-	ObjectCount[] viewItemsStatistics() throws SolrServerException;
+	ObjectCount[] viewItemsStatistics(Context context) throws SolrServerException, SQLException;
 
 	ObjectCount[] downloadItemsStatistics() throws SolrServerException;
 

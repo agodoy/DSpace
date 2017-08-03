@@ -285,4 +285,11 @@ public class ItemDAOImpl extends AbstractHibernateDSODAO<Item> implements ItemDA
         Query query = createQuery(context, "FROM Item");
         return list(query);
     }
+    
+    @Override
+    public List<Item> findBySubmitter(Context context, UUID submitterId) throws SQLException {
+        Query query = createQuery(context, "FROM Item WHERE submitter_id =:submitter");
+        query.setParameter("submitter", submitterId);
+        return list(query);
+    }
 }

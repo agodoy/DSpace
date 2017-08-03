@@ -32,9 +32,9 @@ import org.dspace.statistics.ObjectCount;
 /**
  * This class provides all CRUD operation over holders.
  * 
- * @author agodoy
+ * @authora agodoy
  */
-@Path("/estadisticas")
+//@Path("/estadisticas")
 public class StatisticsResource extends Resource {
 	protected StatisticsService statisticsService = ContentServiceFactory.getInstance().getStatisticsService();
 	protected ItemService itemService = ContentServiceFactory.getInstance().getItemService();
@@ -109,7 +109,7 @@ public class StatisticsResource extends Resource {
 
 			context = createContext();
 
-			result = statisticsService.viewItemsStatistics();
+			result = statisticsService.viewItemsStatistics(context);
 			
 			context.complete();
 
