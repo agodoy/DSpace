@@ -53,37 +53,28 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 
 		for (Item item : items) {
 
-			if (item.getSubmitter() != null && item.getSubmitter().getEmail() != null
-					&& !emails.contains(item.getSubmitter().getEmail())) {
+			if (item.getSubmitter() != null && !emails.contains(item.getSubmitter().getEmail())) {
 
 				Holder holder = new Holder();
 
 				holder.setCorreo(item.getSubmitter().getEmail());
-				List<Item> itemsBySubmitter = itemDao.findBySubmitter(context, item.getSubmitter().getID());
-
-				for (Item item2 : itemsBySubmitter) {
-
-					if (holder.getNombre() == null && holder.getNumTel() == null && holder.getpApellido() == null) {
-
-						List<MetadataValue> metadata = metadataValueDao.findByDspaceObject(context, item2.id);
-
-						for (MetadataValue meta : metadata) {
-							if (meta.getMetadataField().getID().equals(new Integer(74)))
-								holder.setNombre(meta.getValue());
-							if (meta.getMetadataField().getID().equals(new Integer(75))) {
-								String[] apellidos = StringUtils.split(meta.getValue(), "");
-								if (apellidos.length > 0)
-									holder.setpApellido(apellidos[0]);
-								if (apellidos.length > 1)
-									holder.setsApellido(apellidos[1]);
-							}
-							if (meta.getMetadataField().getID().equals(new Integer(76)))
-								holder.setNumTel(meta.getValue());
-						}
-
+				
+				List<MetadataValue> metadata = item.getSubmitter().getMetadata();
+				
+				for (MetadataValue meta : metadata) {
+					if (meta.getMetadataField().getID().equals(new Integer(74)))
+						holder.setNombre(meta.getValue());
+					if (meta.getMetadataField().getID().equals(new Integer(75))) {
+						String[] apellidos = StringUtils.split(meta.getValue(), " ");
+						if (apellidos.length > 0)
+							holder.setpApellido(apellidos[0]);
+						if (apellidos.length > 1)
+							holder.setsApellido(apellidos[1]);
 					}
+					if (meta.getMetadataField().getID().equals(new Integer(76)))
+						holder.setNumTel(meta.getValue());
 				}
-
+				
 				holders.add(holder);
 				emails.add(item.getSubmitter().getEmail());
 
