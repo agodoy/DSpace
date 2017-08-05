@@ -141,7 +141,7 @@ public class StatisticsResource extends Resource {
 
 			context = createContext();
 			
-			result = statisticsService.downloadItemsStatistics();
+			result = statisticsService.downloadItemsStatistics(context);
 
 			context.complete();
 

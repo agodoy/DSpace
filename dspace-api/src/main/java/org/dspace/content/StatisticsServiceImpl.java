@@ -9,9 +9,8 @@ import java.util.UUID;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
-import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.dspace.authorize.AuthorizeException;
+import org.dspace.content.dao.BitstreamDAO;
 import org.dspace.content.dao.ItemDAO;
 import org.dspace.content.dao.MetadataValueDAO;
 import org.dspace.core.Context;
@@ -21,11 +20,15 @@ import org.dspace.services.ConfigurationService;
 import org.dspace.statistics.ObjectCount;
 import org.dspace.statistics.service.SolrLoggerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.support.nativejdbc.CommonsDbcpNativeJdbcExtractor;
 
 public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> implements StatisticsService {
 
 	@Autowired(required = true)
 	protected ItemDAO itemDao;
+
+	@Autowired(required = true)
+	protected BitstreamDAO bitstreamDao;
 
 	@Autowired(required = true)
 	protected MetadataValueDAO metadataDao;
@@ -38,9 +41,6 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 
 	@Autowired(required = true)
 	private HandleDAO handleDao;
-
-	@Autowired(required = true)
-	private MetadataValueDAO metadataValueDao;
 
 	private static Logger log = Logger.getLogger(StatisticsServiceImpl.class);
 
@@ -58,9 +58,9 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 				Holder holder = new Holder();
 
 				holder.setCorreo(item.getSubmitter().getEmail());
-				
+
 				List<MetadataValue> metadata = item.getSubmitter().getMetadata();
-				
+
 				for (MetadataValue meta : metadata) {
 					if (meta.getMetadataField().getID().equals(new Integer(74)))
 						holder.setNombre(meta.getValue());
@@ -74,7 +74,7 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 					if (meta.getMetadataField().getID().equals(new Integer(76)))
 						holder.setNumTel(meta.getValue());
 				}
-				
+
 				holders.add(holder);
 				emails.add(item.getSubmitter().getEmail());
 
@@ -121,51 +121,53 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 		return null;
 	}
 
-	public void ping() {
-		log.info("solr-statistics.spidersfile:" + configurationService.getProperty("solr-statistics.spidersfile"));
-		log.info("solr-statistics.server:" + configurationService.getProperty("solr-statistics.server"));
-		log.info("usage-statistics.dbfile:" + configurationService.getProperty("usage-statistics.dbfile"));
-		log.info("usage-statistics.dbfile:" + configurationService.getProperty("usage-statistics.dbfile"));
-		log.info("padron.authorization.usuario:" + configurationService.getProperty("padron.authorization.usuario"));
-
-		HttpSolrServer server = null;
-
-		if (configurationService.getProperty("solr-statistics.server") != null) {
-			try {
-				server = new HttpSolrServer(configurationService.getProperty("solr-statistics.server"));
-			} catch (Exception e) {
-				log.error(e.getMessage(), e);
-			}
-		}
-
-		try {
-			SolrPingResponse ping = server.ping();
-			log.info("Ping of Solr Core [%s] Returned with Status [%d]" + ping.getStatus());
-
-		} catch (Exception e) {
-			log.info("Ping of Solr Core [%s] Failed with [%s].  New Core Will be Created" + e.getClass().getName());
-		}
-	}
-
 	@Override
 	public ObjectCount[] viewItemsStatistics(Context context) throws SolrServerException, SQLException {
 
 		String url = configurationService.getProperty("dspace.baseUrl");
-
-		ObjectCount[] items = solrLoggerService.queryFacetField("type:2", "statistics_type:view", "uid", 500000, true,
-				null);
+		ObjectCount[] items = solrLoggerService.queryFacetField("type:2", "statistics_type:view", "id", 5000000, false,null);
 
 		for (ObjectCount objectCount : items) {
-			List<Handle> handles = handleDao.findByItemId(context, objectCount.getValue());
-			objectCount.setValue(url + "/handle/" + handles.get(0));
+			Item item;
+			try {
+				item = itemDao.findByLegacyId(context, Integer.parseInt(objectCount.getValue()), Item.class);
+			} catch (NumberFormatException e) {
+				item = itemDao.findByID(context, Item.class, UUID.fromString(objectCount.getValue()));
+			}
+
+			List<Handle> handles = handleDao.getHandlesByDSpaceObject(context, item);
+			if (!handles.isEmpty())
+				objectCount.setValue(url + "/handle/" + handles.get(0).getHandle());
+			else
+				objectCount.setValue(url + "/handle");
 		}
 
 		return items;
 	}
 
 	@Override
-	public ObjectCount[] downloadItemsStatistics() throws SolrServerException {
-		return solrLoggerService.queryFacetField("type:0", "statistics_type:view", "uid", 500000, true, null);
+	public ObjectCount[] downloadItemsStatistics(Context context) throws SolrServerException, SQLException {
+
+		String url = configurationService.getProperty("dspace.baseUrl");
+		ObjectCount[] bitstreams = solrLoggerService.queryFacetField("type:0", "statistics_type:view", "id", 5000000,false, null);
+
+		for (ObjectCount objectCount : bitstreams) {
+			Bitstream bitstream;
+			try {
+				bitstream = bitstreamDao.findByLegacyId(context, Integer.parseInt(objectCount.getValue()), Bitstream.class);
+			} catch (NumberFormatException e) {
+				bitstream = bitstreamDao.findByID(context, Bitstream.class, UUID.fromString(objectCount.getValue()));
+			}
+
+			List<Handle> handles = handleDao.getHandlesByDSpaceObject(context, bitstream);
+
+			if (!handles.isEmpty())
+				objectCount.setValue(url + "/handle/" + handles.get(0).getHandle());
+			else
+				objectCount.setValue(url + "/handle");
+		}
+
+		return bitstreams;
 	}
 
 }
