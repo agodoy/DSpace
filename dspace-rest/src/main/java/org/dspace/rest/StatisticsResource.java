@@ -8,7 +8,9 @@
 package org.dspace.rest;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -154,6 +156,40 @@ public class StatisticsResource extends Resource {
 					+ e.getMessage(), context);
 		} catch (SolrServerException e) {
 			processException("Something went wrong while reading items downloads statistics, ContextError. Message: "
+					+ e.getMessage(), context);
+		} finally {
+			processFinally(context);
+		}
+
+		return result;
+	}
+	
+
+	@GET
+	@Path("/ranking/autores")
+	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
+	public Map viewAuthors() throws WebApplicationException {
+
+		Map result = null;
+		org.dspace.core.Context context = null;
+
+		try {
+
+			context = createContext();
+			
+			result = statisticsService.authorsStatistics(context);
+
+			context.complete();
+
+		} catch (SQLException e) {
+			processException(
+					"Something went wrong while reading authors statistics from database. Message: " + e,
+					context);
+		} catch (ContextException e) {
+			processException("Something went wrong while reading authors statistics, ContextError. Message: "
+					+ e.getMessage(), context);
+		} catch (SolrServerException e) {
+			processException("Something went wrong while reading authors statistics, ContextError. Message: "
 					+ e.getMessage(), context);
 		} finally {
 			processFinally(context);

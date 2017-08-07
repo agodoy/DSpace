@@ -1,6 +1,7 @@
 package org.dspace.content;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.solr.client.solrj.SolrServerException;
@@ -17,5 +18,7 @@ public interface StatisticsService extends DSpaceObjectService<Holder>, DSpaceOb
 	ObjectCount[] viewItemsStatistics(Context context) throws SolrServerException, SQLException;
 
 	ObjectCount[] downloadItemsStatistics(Context context) throws SolrServerException, SQLException;
+
+	HashMap authorsStatistics(Context context) throws SolrServerException, SQLException;
 
 }

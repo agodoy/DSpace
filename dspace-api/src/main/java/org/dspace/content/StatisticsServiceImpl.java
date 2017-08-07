@@ -3,6 +3,7 @@ package org.dspace.content;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,13 +15,11 @@ import org.dspace.content.dao.BitstreamDAO;
 import org.dspace.content.dao.ItemDAO;
 import org.dspace.content.dao.MetadataValueDAO;
 import org.dspace.core.Context;
-import org.dspace.handle.Handle;
 import org.dspace.handle.dao.HandleDAO;
 import org.dspace.services.ConfigurationService;
 import org.dspace.statistics.ObjectCount;
 import org.dspace.statistics.service.SolrLoggerService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.support.nativejdbc.CommonsDbcpNativeJdbcExtractor;
 
 public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> implements StatisticsService {
 
@@ -125,7 +124,8 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 	public ObjectCount[] viewItemsStatistics(Context context) throws SolrServerException, SQLException {
 
 		String url = configurationService.getProperty("dspace.baseUrl");
-		ObjectCount[] items = solrLoggerService.queryFacetField("type:2", "statistics_type:view", "id", 5000000, false,null);
+		ObjectCount[] items = solrLoggerService.queryFacetField("type:2", "statistics_type:view", "id", 5000000, false,
+				null);
 
 		for (ObjectCount objectCount : items) {
 			Item item;
@@ -135,13 +135,10 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 				item = itemDao.findByID(context, Item.class, UUID.fromString(objectCount.getValue()));
 			}
 
-			List<Handle> handles = handleDao.getHandlesByDSpaceObject(context, item);
-			if (!handles.isEmpty())
-				objectCount.setValue(url + "/handle/" + handles.get(0).getHandle());
-			else
-				objectCount.setValue(url + "/handle");
-		}
+			if (item != null)
+				objectCount.setValue(url + "/handle/" + item.getHandle());
 
+		}
 		return items;
 	}
 
@@ -149,25 +146,61 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 	public ObjectCount[] downloadItemsStatistics(Context context) throws SolrServerException, SQLException {
 
 		String url = configurationService.getProperty("dspace.baseUrl");
-		ObjectCount[] bitstreams = solrLoggerService.queryFacetField("type:0", "statistics_type:view", "id", 5000000,false, null);
+		ObjectCount[] bitstreams = solrLoggerService.queryFacetField("type:0", "statistics_type:view", "id", 5000000,
+				false, null);
 
 		for (ObjectCount objectCount : bitstreams) {
 			Bitstream bitstream;
 			try {
-				bitstream = bitstreamDao.findByLegacyId(context, Integer.parseInt(objectCount.getValue()), Bitstream.class);
+				bitstream = bitstreamDao.findByLegacyId(context, Integer.parseInt(objectCount.getValue()),
+						Bitstream.class);
 			} catch (NumberFormatException e) {
 				bitstream = bitstreamDao.findByID(context, Bitstream.class, UUID.fromString(objectCount.getValue()));
 			}
 
-			List<Handle> handles = handleDao.getHandlesByDSpaceObject(context, bitstream);
-
-			if (!handles.isEmpty())
-				objectCount.setValue(url + "/handle/" + handles.get(0).getHandle());
-			else
-				objectCount.setValue(url + "/handle");
+			objectCount.setValue(url + "/handle/" + bitstream.getHandle());
 		}
 
 		return bitstreams;
+	}
+
+	@Override
+	public HashMap authorsStatistics(Context context) throws SolrServerException, SQLException {
+
+		ObjectCount[] items = solrLoggerService.queryFacetField("type:2", "statistics_type:view", "id", 5000000, false,
+				null);
+		HashMap<String, Integer> authors = new HashMap<String, Integer>();
+
+		for (ObjectCount objectCount : items) {
+
+			Item item;
+
+			try {
+				item = itemDao.findByLegacyId(context, Integer.parseInt(objectCount.getValue()), Item.class);
+			} catch (NumberFormatException e) {
+				item = itemDao.findByID(context, Item.class, UUID.fromString(objectCount.getValue()));
+			}
+
+			try {
+
+				String authorName = null;
+				for (MetadataValue meta : item.getMetadata())
+					if (meta.getMetadataField().getID().equals(new Integer(3)))
+						authorName = meta.getValue();
+
+				if (authorName != null && authors.containsKey(authorName)) {
+					Integer count = authors.get(authorName);
+					authors.put(authorName, count++);
+				} else if (authorName != null)
+					authors.put(authorName, 1);
+
+			} catch (Exception e1) {
+				e1.getCause();
+				e1.getMessage();
+			}
+		}
+
+		return authors;
 	}
 
 }
