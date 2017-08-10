@@ -157,8 +157,10 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 			} catch (NumberFormatException e) {
 				bitstream = bitstreamDao.findByID(context, Bitstream.class, UUID.fromString(objectCount.getValue()));
 			}
-
-			objectCount.setValue(url + "/handle/" + bitstream.getHandle());
+			
+			if(!bitstream.getBundles().isEmpty() && !bitstream.getBundles().get(0).getItems().isEmpty())
+				objectCount.setValue(url + "/handle/" + bitstream.getBundles().get(0).getItems().get(0).getHandle());
+			
 		}
 
 		return bitstreams;
