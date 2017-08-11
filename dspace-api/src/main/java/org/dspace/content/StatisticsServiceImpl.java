@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -15,7 +14,6 @@ import org.dspace.content.dao.BitstreamDAO;
 import org.dspace.content.dao.ItemDAO;
 import org.dspace.content.dao.MetadataValueDAO;
 import org.dspace.core.Context;
-import org.dspace.handle.dao.HandleDAO;
 import org.dspace.services.ConfigurationService;
 import org.dspace.statistics.ObjectCount;
 import org.dspace.statistics.service.SolrLoggerService;
@@ -37,11 +35,6 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 
 	@Autowired(required = true)
 	private SolrLoggerService solrLoggerService;
-
-	@Autowired(required = true)
-	private HandleDAO handleDao;
-
-	private static Logger log = Logger.getLogger(StatisticsServiceImpl.class);
 
 	@Override
 	public List<Holder> findAll(Context context) throws SQLException {
@@ -169,13 +162,13 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 	@Override
 	public HashMap authorsStatistics(Context context) throws SolrServerException, SQLException {
 
-		ObjectCount[] items = solrLoggerService.queryFacetField("type:2", "statistics_type:view", "id", 5000000, false,
-				null);
+		ObjectCount[] items = solrLoggerService.queryFacetField("type:2", "statistics_type:view", "id", 500000, false,null);
+		
 		HashMap<String, Integer> authors = new HashMap<String, Integer>();
 
 		for (ObjectCount objectCount : items) {
 
-			Item item;
+			Item item; 
 
 			try {
 				item = itemDao.findByLegacyId(context, Integer.parseInt(objectCount.getValue()), Item.class);
@@ -192,13 +185,12 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 
 				if (authorName != null && authors.containsKey(authorName)) {
 					Integer count = authors.get(authorName);
-					authors.put(authorName, count++);
+					authors.put(authorName, count + Integer.parseInt(objectCount.getValue()));
 				} else if (authorName != null)
-					authors.put(authorName, 1);
+					authors.put(authorName, Integer.parseInt(objectCount.getValue()));
 
 			} catch (Exception e1) {
 				e1.getCause();
-				e1.getMessage();
 			}
 		}
 
