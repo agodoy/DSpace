@@ -185,9 +185,9 @@ public class StatisticsServiceImpl extends DSpaceObjectServiceImpl<Holder> imple
 
 				if (authorName != null && authors.containsKey(authorName)) {
 					Integer count = authors.get(authorName);
-					authors.put(authorName, count + Integer.parseInt(objectCount.getValue()));
+					authors.put(authorName, count + new Long(objectCount.getCount()).intValue());
 				} else if (authorName != null)
-					authors.put(authorName, Integer.parseInt(objectCount.getValue()));
+					authors.put(authorName, new Long(objectCount.getCount()).intValue());
 
 			} catch (Exception e1) {
 				e1.getCause();
