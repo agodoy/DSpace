@@ -9,6 +9,7 @@ package org.dspace.authority.factory;
 
 import org.dspace.authority.AuthoritySearchService;
 import org.dspace.authority.AuthorityTypes;
+import org.dspace.authority.curp.CurpService;
 import org.dspace.authority.indexer.AuthorityIndexerInterface;
 import org.dspace.authority.indexer.AuthorityIndexingService;
 import org.dspace.authority.service.AuthorityService;
@@ -41,6 +42,9 @@ public class AuthorityServiceFactoryImpl extends AuthorityServiceFactory {
 
     @Autowired(required = true)
     private List<AuthorityIndexerInterface> authorityIndexerInterfaces;
+    
+    @Autowired(required = true)
+    private CurpService curpService;
 
     @Override
     public AuthorityValueService getAuthorityValueService() {
@@ -70,5 +74,10 @@ public class AuthorityServiceFactoryImpl extends AuthorityServiceFactory {
     @Override
     public List<AuthorityIndexerInterface> getAuthorityIndexers() {
         return authorityIndexerInterfaces;
+    }
+
+	@Override
+	public CurpService getCurpsService() {
+		return curpService;
     }
 }

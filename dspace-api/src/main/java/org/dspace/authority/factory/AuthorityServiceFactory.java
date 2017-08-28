@@ -9,6 +9,7 @@ package org.dspace.authority.factory;
 
 import org.dspace.authority.AuthoritySearchService;
 import org.dspace.authority.AuthorityTypes;
+import org.dspace.authority.curp.CurpService;
 import org.dspace.authority.indexer.AuthorityIndexerInterface;
 import org.dspace.authority.indexer.AuthorityIndexingService;
 import org.dspace.authority.service.AuthorityService;
@@ -40,4 +41,6 @@ public abstract class AuthorityServiceFactory {
     {
         return DSpaceServicesFactory.getInstance().getServiceManager().getServiceByName("authorityServiceFactory", AuthorityServiceFactory.class);
     }
+
+	public abstract CurpService getCurpsService();
 }

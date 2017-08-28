@@ -1,5 +1,12 @@
 <?xml version="1.0"?>
 <commands>
+ <command>
+        <name>curp-migrate</name>
+        <description>Migrate CURP data</description>
+        <step>
+            <class>org.dspace.authority.curp.CurpsIndexer</class>
+        </step>
+    </command>
     <command>
         <name>bitstore-migrate</name>
         <description>Assetstore migration tool</description>
