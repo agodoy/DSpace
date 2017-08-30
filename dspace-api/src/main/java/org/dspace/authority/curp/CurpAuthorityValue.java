@@ -5,11 +5,12 @@
  *
  * http://www.dspace.org/license/
  */
-package org.dspace.authority.orcid;
+package org.dspace.authority.curp;
 
 import org.dspace.authority.AuthorityValue;
 import org.dspace.authority.AuthorityValueServiceImpl;
 import org.dspace.authority.PersonAuthorityValue;
+import org.dspace.authority.orcid.Orcid;
 import org.dspace.authority.orcid.model.Bio;
 import org.dspace.authority.orcid.model.BioExternalIdentifier;
 import org.dspace.authority.orcid.model.BioName;

@@ -13,7 +13,12 @@ public final class CurpsIndexer {
 		System.out.println("Inicia procesamiento de CURPs.");
 		
 		CurpService curpsService = AuthorityServiceFactory.getInstance().getCurpsService();
-		curpsService.indexCurps();
+		try {
+			curpsService.indexCurps();
+		} catch (Exception e) {
+			log.info("Procesamiento de CURPs finalizado con errores.");
+			System.out.println("Procesamiento de CURPs finalizado con errores.");
+		}
 
 		log.info("Procesamiento de CURPs finalizado.");
 		System.out.println("Procesamiento de CURPs finalizado.");
